@@ -1,281 +1,275 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#101522">
-  <title>BikeSensor | Live BLE Accelerometer</title>
-  <style>
-    :root { color-scheme: dark; --bg:#101522; --card:#192134; --edge:#2d3950; --muted:#9bacbf; --text:#f2f6fd; --x:#5be5c2; --y:#ff83aa; --z:#ffd37a; }
-    * { box-sizing:border-box; }
-    body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; color:var(--text); background:var(--bg); }
-    main { width:min(900px,100%); padding:24px 16px calc(30px + env(safe-area-inset-bottom)); margin:auto; }
-    header { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:22px; }
-    h1 { font-size:26px; letter-spacing:-.6px; margin:0 0 3px; }
-    .sub { color:var(--muted); font-size:13px; }
-    .badge { border:1px solid var(--edge); border-radius:999px; padding:8px 11px; color:var(--muted); white-space:nowrap; font-size:12px; }
-    .dot { display:inline-block; width:8px; height:8px; margin-right:7px; border-radius:50%; background:#8793a6; }
-    .connected .dot { background:var(--x); box-shadow:0 0 10px #5be5c280; }
-    .error .dot { background:var(--y); }
-    .panel { background:var(--card); border:1px solid var(--edge); border-radius:18px; padding:18px; margin-bottom:15px; }
-    .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
-    button { border:0; border-radius:11px; padding:12px 16px; font:600 14px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; color:#0e1723; background:var(--x); cursor:pointer; }
-    button.secondary { background:#2c3850; color:var(--text); }
-    button.danger { color:#fff; background:#9a4160; }
-    button:disabled { opacity:.36; cursor:not-allowed; }
-    #message { margin-top:12px; font-size:13px; line-height:1.5; color:var(--muted); overflow-wrap:anywhere; }
-    .values { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
-    .value { min-width:0; }
-    .value .label { font-weight:600; font-size:13px; color:var(--muted); margin-bottom:8px; }
-    .value .num { font-size:clamp(20px,4vw,31px); letter-spacing:-.8px; font-variant-numeric:tabular-nums; overflow:hidden; text-overflow:ellipsis; }
-    .unit { color:var(--muted); font-size:13px; margin-left:3px; }
-    .x { color:var(--x); } .y { color:var(--y); } .z { color:var(--z); }
-    .sectionTitle { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:12px; font-size:15px; font-weight:650; }
-    .hint { color:var(--muted); font-size:12px; font-weight:400; }
-    canvas { display:block; width:100%; height:300px; border-radius:12px; background:#111827; }
-    .legend { display:flex; gap:20px; margin-top:12px; font-size:13px; }
-    .stats { color:var(--muted); font-size:13px; margin-top:11px; }
-    .help { color:var(--muted); font-size:12px; line-height:1.6; }
-    @media (max-width:560px) { .values {grid-template-columns:repeat(2,minmax(0,1fr));} header {align-items:start;} h1{font-size:24px;} canvas{height:270px;} button {flex:1;} }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#101522">
+<title>BikeSensor | Acceleration, Pressure &amp; Temperature</title>
+<style>
+:root{color-scheme:dark;--bg:#101522;--card:#192134;--edge:#2d3950;--muted:#9bacbf;--text:#f2f6fd;--x:#5be5c2;--y:#ff83aa;--z:#ffd37a;--p:#77baff}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--text);background:var(--bg)}
+main{width:min(900px,100%);padding:24px 16px calc(30px + env(safe-area-inset-bottom));margin:auto}
+header{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:22px}
+h1{font-size:26px;letter-spacing:-.6px;margin:0 0 3px}.sub{color:var(--muted);font-size:13px}
+.badge{border:1px solid var(--edge);border-radius:999px;padding:8px 11px;color:var(--muted);white-space:nowrap;font-size:12px}
+.dot{display:inline-block;width:8px;height:8px;margin-right:7px;border-radius:50%;background:#8793a6}
+.connected .dot{background:var(--x);box-shadow:0 0 10px #5be5c280}.error .dot{background:var(--y)}
+.panel{background:var(--card);border:1px solid var(--edge);border-radius:18px;padding:18px;margin-bottom:15px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+button{border:0;border-radius:11px;padding:12px 16px;font:600 14px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#0e1723;background:var(--x);cursor:pointer}
+button.secondary{background:#2c3850;color:var(--text)}button.danger{background:#9a4160;color:#fff}button:disabled{opacity:.36;cursor:not-allowed}
+#message{margin-top:12px;font-size:13px;line-height:1.5;color:var(--muted);overflow-wrap:anywhere}
+.values{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.value{min-width:0}
+.value .label{font-weight:600;font-size:13px;color:var(--muted);margin-bottom:8px}
+.value .num{font-size:clamp(20px,4vw,31px);letter-spacing:-.8px;font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.unit{color:var(--muted);font-size:13px;margin-left:3px}
+.x{color:var(--x)}.y{color:var(--y)}.z{color:var(--z)}.p{color:var(--p)}
+.sectionTitle{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px;font-size:15px;font-weight:650}
+.hint{color:var(--muted);font-size:12px;font-weight:400}
+canvas{display:block;width:100%;height:280px;border-radius:12px;background:#111827}
+#pressureGraph{height:180px}.legend{display:flex;gap:20px;margin-top:12px;font-size:13px}
+.stats{color:var(--muted);font-size:13px;margin-top:11px}.help{color:var(--muted);font-size:12px;line-height:1.6;margin:12px 0 0}
+.sensor-status{margin:0 0 14px;color:var(--muted);font-size:12px}.sensor-status span{display:inline-block;padding:5px 9px;border-radius:8px;background:#111827}
+@media(max-width:560px){.values{grid-template-columns:repeat(2,minmax(0,1fr))}header{align-items:start}h1{font-size:24px}canvas{height:240px}#pressureGraph{height:170px}button{flex:1}}
+</style>
 </head>
 <body>
 <main>
-  <header>
-    <div><h1>BikeSensor</h1><div class="sub">Live accelerometer • nRF52 / LIS2DW12</div></div>
-    <div class="badge" id="badge"><span class="dot"></span><span id="state">Disconnected</span></div>
-  </header>
-
-  <section class="panel">
-    <div class="row">
-      <button id="connect">Connect to BikeSensor</button>
-      <button id="disconnect" class="secondary" disabled>Disconnect</button>
-    </div>
-    <div id="message" aria-live="polite">Open this page in Bluefy on your iPhone, then tap Connect.</div>
-  </section>
-
-  <section class="panel values">
+<header>
+  <div><h1>BikeSensor</h1><div class="sub">Live BLE • LIS2DW12 + MS5837-30BA</div></div>
+  <div class="badge" id="badge"><span class="dot"></span><span id="state">Disconnected</span></div>
+</header>
+<section class="panel">
+  <div class="row"><button id="connect">Connect to BikeSensor</button><button id="disconnect" class="secondary" disabled>Disconnect</button></div>
+  <div id="message" aria-live="polite">Open this HTTPS page in Bluefy on your iPhone, then tap Connect.</div>
+</section>
+<section class="panel">
+  <div class="sectionTitle"><span>Pressure &amp; temperature</span><span class="hint" id="pressureStatus">Waiting for MS5837 data</span></div>
+  <div class="values">
+    <div class="value"><div class="label p">Absolute pressure</div><div class="num"><span id="pressure">—</span><span class="unit">mbar</span></div></div>
+    <div class="value"><div class="label">Absolute pressure</div><div class="num"><span id="bar">—</span><span class="unit">bar</span></div></div>
+    <div class="value"><div class="label">Temperature</div><div class="num"><span id="temperature">—</span><span class="unit">°C</span></div></div>
+    <div class="value"><div class="label">Tire gauge pressure</div><div class="num"><span id="psi">—</span><span class="unit">psi</span></div></div>
+  </div>
+  <div class="row" style="margin-top:18px"><button id="zero" class="secondary" disabled>Set ambient reference (0 psi)</button><span class="hint" id="ambient">No ambient reference set</span></div>
+  <p class="help">Pressure readings are <strong>absolute</strong>. To measure tire gauge pressure, first expose the sensor to ambient air and tap <strong>Set ambient reference</strong>. Do this <strong>before</strong> placing it inside a pressurized tire. The reference resets when the page reloads.</p>
+</section>
+<section class="panel">
+  <div class="sectionTitle"><span>Absolute pressure vs. time</span><span class="hint">Last 90 seconds • mbar</span></div>
+  <canvas id="pressureGraph" aria-label="Live absolute-pressure graph"></canvas>
+</section>
+<section class="panel">
+  <div class="sectionTitle"><span>Acceleration</span><span class="hint" id="accelStatus">Waiting for LIS2DW12 data</span></div>
+  <div class="values">
     <div class="value"><div class="label x">X axis</div><div class="num"><span id="vx">—</span><span class="unit">g</span></div></div>
     <div class="value"><div class="label y">Y axis</div><div class="num"><span id="vy">—</span><span class="unit">g</span></div></div>
     <div class="value"><div class="label z">Z axis</div><div class="num"><span id="vz">—</span><span class="unit">g</span></div></div>
     <div class="value"><div class="label">Magnitude</div><div class="num"><span id="vm">—</span><span class="unit">g</span></div></div>
-  </section>
-
-  <section class="panel">
-    <div class="sectionTitle"><span>Acceleration vs. time</span><span class="hint">Last 20 seconds • units: g</span></div>
-    <canvas id="graph" aria-label="Real-time X, Y, Z acceleration graph"></canvas>
-    <div class="legend"><span class="x">● X</span><span class="y">● Y</span><span class="z">● Z</span></div>
-    <div class="stats"><span id="count">0</span> BLE updates received <span id="rate"></span></div>
-  </section>
-
-  <section class="panel">
-    <div class="sectionTitle">Data logging <span class="hint" id="logCount">0 samples recorded</span></div>
-    <div class="row">
-      <button id="record" disabled>Start recording</button>
-      <button id="export" class="secondary" disabled>Export CSV</button>
-      <button id="clear" class="secondary">Clear graph</button>
-    </div>
-    <p class="help">Recording stores samples in this page while it stays open. Export before closing the tab. Keep Bluefy in the foreground during testing.</p>
-  </section>
+  </div>
+</section>
+<section class="panel">
+  <div class="sectionTitle"><span>Acceleration vs. time</span><span class="hint">Last 20 seconds • g</span></div>
+  <canvas id="accelGraph" aria-label="Real-time X, Y, Z acceleration graph"></canvas>
+  <div class="legend"><span class="x">● X</span><span class="y">● Y</span><span class="z">● Z</span></div>
+  <div class="stats"><span id="count">0</span> valid BLE updates <span id="rate"></span></div>
+</section>
+<section class="panel">
+  <div class="sectionTitle"><span>Data recording</span><span class="hint" id="logCount">0 samples recorded</span></div>
+  <div class="row"><button id="record" disabled>Start recording</button><button id="export" class="secondary" disabled>Export CSV</button><button id="clear" class="secondary">Clear graphs</button></div>
+  <p class="help">CSV stores each BLE notification as a separate row, so acceleration and pressure can arrive at different rates. Export before closing the browser. For testing, keep Bluefy open in the foreground.</p>
+</section>
 </main>
 <script>
-  // These are the exact UUIDs and payload format from your nRF52 firmware.
-  const SERVICE_UUID = '12345678-1234-5678-1234-56789abcdef0';
-  const ACCEL_UUID   = '12345678-1234-5678-1234-56789abcdef1';
-  const DEVICE_NAME  = 'BikeSensor';
-  // Firmware sends ASCII notifications such as "X:12 Y:-35 Z:998" (milli-g), ~10 times/s.
-
-  const $ = id => document.getElementById(id);
-  const connectBtn = $('connect'), disconnectBtn = $('disconnect');
-  const recordBtn = $('record'), exportBtn = $('export');
-  const canvas = $('graph');
-  const ctx = canvas.getContext('2d');
-  const colors = {x:'#5be5c2', y:'#ff83aa', z:'#ffd37a'};
-  const WINDOW_SEC = 20;
-  let device = null, characteristic = null;
-  let points = [], saved = [], total = 0;
-  let recording = false;
-  let recentPacketTimes = [];
-
-  function status(msg, kind='idle') {
-    $('message').textContent = msg;
-    $('state').textContent = kind === 'connected' ? 'Connected' : kind === 'error' ? 'Error' : kind === 'busy' ? 'Connecting' : 'Disconnected';
-    $('badge').className = 'badge ' + kind;
-  }
-  function connectedUI(on) {
-    connectBtn.disabled = on;
-    disconnectBtn.disabled = !on;
-    recordBtn.disabled = !on;
-    if (!on && recording) toggleRecording();
-  }
-  function disconnected() {
-    characteristic = null;
+'use strict';
+// Retains your ORIGINAL service & characteristic. Two short message types may
+// arrive on the SAME characteristic:
+//  Accelerometer: "X:-77 Y:-85 Z:-816" (values in milli-g)
+//  Pressure:      "P:823.5 T:23.70" (absolute mbar and degrees C)
+// Keeping these as two packets avoids the usual 20-byte BLE payload limit
+// when the default ATT MTU is 23 bytes.
+const SERVICE_UUID='12345678-1234-5678-1234-56789abcdef0';
+const DATA_UUID='12345678-1234-5678-1234-56789abcdef1';
+const DEVICE_NAME='BikeSensor';
+const $=id=>document.getElementById(id);
+const accelCanvas=$('accelGraph'),pressureCanvas=$('pressureGraph');
+const ac=accelCanvas.getContext('2d'),pc=pressureCanvas.getContext('2d');
+const colors={x:'#5be5c2',y:'#ff83aa',z:'#ffd37a'};
+const PSI_PER_MBAR=0.0145037738;
+let device=null,characteristic=null,recording=false,ambientMbar=null;
+let lastPressure=null,lastTemperature=null,lastPressureTime=0,lastAccelTime=0;
+let accelPoints=[],pressurePoints=[],saved=[],total=0,packetTimes=[];
+function status(msg,kind='idle'){
+  $('message').textContent=msg;
+  $('state').textContent=kind==='connected'?'Connected':kind==='error'?'Error':kind==='busy'?'Connecting':'Disconnected';
+  $('badge').className='badge '+kind;
+}
+function connectedUI(connected){$('connect').disabled=connected;$('disconnect').disabled=!connected;$('record').disabled=!connected;}
+function disconnected(){characteristic=null;connectedUI(false);if(recording)toggleRecording();status('Disconnected. Tap Connect to reconnect.');}
+async function connect(){
+  if(!navigator.bluetooth){status('Web Bluetooth unavailable. Open this HTTPS page in Bluefy, not Safari.','error');return;}
+  $('connect').disabled=true;
+  status('Choose BikeSensor in the Bluetooth picker…','busy');
+  try{
+    device=await navigator.bluetooth.requestDevice({filters:[{namePrefix:DEVICE_NAME}],optionalServices:[SERVICE_UUID]});
+    device.addEventListener('gattserverdisconnected',disconnected);
+    const server=await device.gatt.connect();
+    const service=await server.getPrimaryService(SERVICE_UUID);
+    characteristic=await service.getCharacteristic(DATA_UUID);
+    characteristic.addEventListener('characteristicvaluechanged',onNotification);
+    await characteristic.startNotifications();
+    connectedUI(true);
+    status('Connected to '+(device.name||DEVICE_NAME)+'. Waiting for sensor notifications…','connected');
+    try{onNotification({target:{value:await characteristic.readValue()}});}catch(_){/* READ optional */}
+  }catch(err){
     connectedUI(false);
-    status('Device disconnected. Tap Connect to reconnect.');
-  }
-
-  async function connect() {
-    if (!navigator.bluetooth) {
-      status('Web Bluetooth is unavailable. Open this HTTPS page in the Bluefy browser (not Safari).', 'error');
-      return;
-    }
-    connectBtn.disabled = true;
-    status('Select BikeSensor from the Bluetooth device chooser…', 'busy');
-    try {
-      // The advertised name is BikeSensor. The custom service need not appear
-      // in the advertising packet when requested via optionalServices.
-      device = await navigator.bluetooth.requestDevice({
-        filters: [{ namePrefix: DEVICE_NAME }],
-        optionalServices: [SERVICE_UUID]
-      });
-      device.addEventListener('gattserverdisconnected', disconnected);
-      const server = await device.gatt.connect();
-      const service = await server.getPrimaryService(SERVICE_UUID);
-      characteristic = await service.getCharacteristic(ACCEL_UUID);
-      characteristic.addEventListener('characteristicvaluechanged', onNotification);
-      await characteristic.startNotifications();
-      connectedUI(true);
-      status('Receiving live acceleration from ' + (device.name || DEVICE_NAME) + '.', 'connected');
-      // This characteristic also supports READ; display the initial value if available.
-      try { onNotification({target:{value:await characteristic.readValue()}}); } catch (_) {}
-    } catch (err) {
-      connectedUI(false);
-      status('Connection failed: ' + (err?.message || String(err)) + '. Make sure nRF Connect is disconnected.', 'error');
-      try { if (device?.gatt?.connected) device.gatt.disconnect(); } catch (_) {}
-    } finally {
-      if (!device?.gatt?.connected) connectBtn.disabled = false;
+    status('Connection failed: '+(err?.message||String(err))+'. Check that the board is advertising and nRF Connect is disconnected.','error');
+    try{if(device?.gatt?.connected)device.gatt.disconnect();}catch(_){}
+  }finally{if(!device?.gatt?.connected)$('connect').disabled=false;}
+}
+function disconnect(){if(device?.gatt?.connected)device.gatt.disconnect();else disconnected();}
+function onNotification(event){
+  const value=event.target.value;
+  if(!value)return;
+  const bytes=new Uint8Array(value.buffer,value.byteOffset,value.byteLength);
+  const raw=new TextDecoder('utf-8').decode(bytes).trim();
+  const now=performance.now()/1000;
+  const timestamp=new Date().toISOString();
+  let recognized=false;
+  const acc=raw.match(/\bX:\s*(-?\d+(?:\.\d+)?)\s*,?\s*Y:\s*(-?\d+(?:\.\d+)?)\s*,?\s*Z:\s*(-?\d+(?:\.\d+)?)/i);
+  if(acc){
+    const x=Number(acc[1])/1000,y=Number(acc[2])/1000,z=Number(acc[3])/1000;
+    const m=Math.hypot(x,y,z);
+    if([x,y,z,m].every(Number.isFinite)){
+      recognized=true;lastAccelTime=now;
+      accelPoints.push({t:now,x,y,z});
+      while(accelPoints.length&&accelPoints[0].t<now-21)accelPoints.shift();
+      $('vx').textContent=x.toFixed(3);$('vy').textContent=y.toFixed(3);$('vz').textContent=z.toFixed(3);$('vm').textContent=m.toFixed(3);
+      $('accelStatus').textContent='Receiving acceleration';
+      if(recording)logSample({timestamp,type:'acceleration',x_g:x,y_g:y,z_g:z,magnitude_g:m});
     }
   }
-  function disconnect() {
-    if (device?.gatt?.connected) device.gatt.disconnect();
-    else disconnected();
-  }
-
-  function onNotification(event) {
-    const value = event.target.value; // DataView
-    if (!value) return;
-    const bytes = new Uint8Array(value.buffer, value.byteOffset, value.byteLength);
-    const raw = new TextDecoder('utf-8').decode(bytes).trim();
-    const match = raw.match(/X:\s*(-?\d+(?:\.\d+)?)\s*,?\s*Y:\s*(-?\d+(?:\.\d+)?)\s*,?\s*Z:\s*(-?\d+(?:\.\d+)?)/i);
-    if (!match) {
-      status('Connected, but unexpected BLE payload: ' + raw, 'error');
-      return;
-    }
-    // Incoming numbers are milli-g: 1000 mg = 1 g.
-    const x = Number(match[1]) / 1000;
-    const y = Number(match[2]) / 1000;
-    const z = Number(match[3]) / 1000;
-    const m = Math.hypot(x,y,z);
-    const t = performance.now() / 1000;
-    points.push({t,x,y,z});
-    while (points.length && points[0].t < t - WINDOW_SEC - 1) points.shift();
-    total++;
-    recentPacketTimes.push(t);
-    while (recentPacketTimes.length && recentPacketTimes[0] < t - 3) recentPacketTimes.shift();
-    $('vx').textContent = x.toFixed(3);
-    $('vy').textContent = y.toFixed(3);
-    $('vz').textContent = z.toFixed(3);
-    $('vm').textContent = m.toFixed(3);
-    $('count').textContent = total.toLocaleString();
-    if (recentPacketTimes.length >= 2) {
-      const span = t - recentPacketTimes[0];
-      if (span > .1) $('rate').textContent = '· ' + ((recentPacketTimes.length-1)/span).toFixed(1) + ' Hz';
-    }
-    if (recording) {
-      saved.push({timestamp:new Date().toISOString(),x,y,z,m});
-      $('logCount').textContent = saved.length.toLocaleString() + ' samples recorded';
+  // Accept either the compact BLE packet or a human-readable pressure log.
+  const pMatch=raw.match(/\b(?:P|Pressure):\s*(-?\d+(?:\.\d+)?)/i);
+  const tMatch=raw.match(/\b(?:T|Temperature):\s*(-?\d+(?:\.\d+)?)/i);
+  if(pMatch&&tMatch){
+    const p=Number(pMatch[1]),t=Number(tMatch[1]);
+    if(Number.isFinite(p)&&Number.isFinite(t)&&p>=0){
+      recognized=true;lastPressure=p;lastTemperature=t;lastPressureTime=now;
+      pressurePoints.push({t:now,p});
+      while(pressurePoints.length&&pressurePoints[0].t<now-92)pressurePoints.shift();
+      $('pressure').textContent=p.toFixed(1);$('bar').textContent=(p/1000).toFixed(4);
+      $('temperature').textContent=t.toFixed(2);
+      $('zero').disabled=false;
+      updateGauge();
+      $('pressureStatus').textContent='Receiving MS5837 data';
+      if(recording)logSample({timestamp,type:'pressure_temperature',pressure_mbar_abs:p,temperature_c:t,gauge_psi:ambientMbar===null?null:(p-ambientMbar)*PSI_PER_MBAR});
     }
   }
-
-  function toggleRecording() {
-    if (recording) {
-      recording = false;
-      recordBtn.textContent = 'Start recording';
-      recordBtn.classList.remove('danger');
-    } else {
-      saved = [];
-      recording = true;
-      exportBtn.disabled = true;
-      $('logCount').textContent = '0 samples recorded';
-      recordBtn.textContent = 'Stop recording';
-      recordBtn.classList.add('danger');
-    }
-    exportBtn.disabled = saved.length === 0;
+  if(!recognized){
+    $('message').textContent='Connected, but unrecognized BLE data: '+raw.slice(0,100)+'. Expected X:… Y:… Z:… or P:823.5 T:23.70.';
+    return;
   }
-  function exportCsv() {
-    if (!saved.length) return;
-    if (recording) toggleRecording();
-    const rows = ['timestamp,x_g,y_g,z_g,magnitude_g'];
-    for (const r of saved) rows.push([r.timestamp,r.x.toFixed(4),r.y.toFixed(4),r.z.toFixed(4),r.m.toFixed(4)].join(','));
-    const blob = new Blob([rows.join('\r\n') + '\r\n'], {type:'text/csv;charset=utf-8'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'BikeSensor_' + new Date().toISOString().replace(/[:.]/g,'-') + '.csv';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 10000);
+  total++;packetTimes.push(now);
+  while(packetTimes.length&&packetTimes[0]<now-3)packetTimes.shift();
+  $('count').textContent=total.toLocaleString();
+  if(packetTimes.length>=2){const span=now-packetTimes[0];if(span>.1)$('rate').textContent='· '+((packetTimes.length-1)/span).toFixed(1)+' Hz';}
+  if(total===1||total===10){$('message').textContent='Live data received. Pressure requires separate P:… T:… notifications from your firmware.';}
+}
+function updateGauge(){
+  $('psi').textContent=(ambientMbar===null||lastPressure===null)?'—':((lastPressure-ambientMbar)*PSI_PER_MBAR).toFixed(2);
+  $('ambient').textContent=ambientMbar===null?'No ambient reference set':'Ambient reference: '+ambientMbar.toFixed(1)+' mbar';
+}
+function zeroAmbient(){
+  if(lastPressure===null)return;
+  ambientMbar=lastPressure;
+  updateGauge();
+}
+function logSample(s){saved.push(s);$('logCount').textContent=saved.length.toLocaleString()+' samples recorded';}
+function toggleRecording(){
+  if(recording){recording=false;$('record').textContent='Start recording';$('record').classList.remove('danger');}
+  else{saved=[];recording=true;$('export').disabled=true;$('logCount').textContent='0 samples recorded';$('record').textContent='Stop recording';$('record').classList.add('danger');}
+  $('export').disabled=saved.length===0;
+}
+function exportCsv(){
+  if(recording)toggleRecording();
+  if(!saved.length)return;
+  const columns=['timestamp','type','x_g','y_g','z_g','magnitude_g','pressure_mbar_abs','temperature_c','gauge_psi'];
+  const rows=[columns.join(',')];
+  for(const r of saved)rows.push(columns.map(k=>r[k]===undefined||r[k]===null?'':String(r[k])).join(','));
+  const blob=new Blob([rows.join('\r\n')+'\r\n'],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download='BikeSensor_'+new Date().toISOString().replace(/[:.]/g,'-')+'.csv';
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),10000);
+}
+function clearGraphs(){accelPoints=[];pressurePoints=[];total=0;packetTimes=[];$('count').textContent='0';$('rate').textContent='';}
+function prepareCanvas(canvas,ctx){
+  const rect=canvas.getBoundingClientRect();const W=rect.width,H=rect.height;
+  if(!W||!H)return null;
+  const dpr=Math.min(window.devicePixelRatio||1,3);
+  if(canvas.width!==Math.round(W*dpr)||canvas.height!==Math.round(H*dpr)){canvas.width=Math.round(W*dpr);canvas.height=Math.round(H*dpr);}
+  ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);
+  return {W,H,left:52,right:14,top:14,bottom:30};
+}
+function drawFrame(ctx,q,lo,hi,windowSec){
+  const {W,H,left,right,top,bottom}=q,plotW=W-left-right,plotH=H-top-bottom;
+  const mapY=v=>top+(hi-v)/(hi-lo)*plotH;
+  const now=performance.now()/1000,begin=now-windowSec,mapX=t=>left+(t-begin)/windowSec*plotW;
+  ctx.font='11px -apple-system, sans-serif';ctx.textAlign='right';ctx.textBaseline='middle';
+  for(let i=0;i<=4;i++){
+    const v=hi+(lo-hi)*i/4,y=top+plotH*i/4;
+    ctx.strokeStyle='#2d3950';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(left,y);ctx.lineTo(W-right,y);ctx.stroke();
+    ctx.fillStyle='#95a5bb';ctx.fillText(v.toFixed(windowSec===90?1:1),left-7,y);
   }
-  function clearGraph() {
-    points = []; total = 0; recentPacketTimes = [];
-    $('count').textContent = '0'; $('rate').textContent = '';
+  ctx.textAlign='center';ctx.textBaseline='top';
+  for(let i=0;i<=4;i++){
+    const x=left+plotW*i/4;
+    ctx.fillStyle='#95a5bb';ctx.fillText((-windowSec*(1-i/4)).toFixed(0)+'s',x,H-bottom+8);
+    ctx.strokeStyle='#253247';ctx.beginPath();ctx.moveTo(x,top);ctx.lineTo(x,H-bottom);ctx.stroke();
   }
-
-  function draw() {
-    const rect = canvas.getBoundingClientRect();
-    const W = rect.width, H = rect.height;
-    if (!W || !H) return;
-    const dpr = Math.min(window.devicePixelRatio || 1, 3);
-    if (canvas.width !== Math.round(W*dpr) || canvas.height !== Math.round(H*dpr)) {
-      canvas.width = Math.round(W*dpr);
-      canvas.height = Math.round(H*dpr);
-    }
-    ctx.setTransform(dpr,0,0,dpr,0,0);
-    ctx.clearRect(0,0,W,H);
-    const left=44, right=14, top=14, bottom=30;
-    const plotW=W-left-right, plotH=H-top-bottom;
-    const now=performance.now()/1000, begin=now-WINDOW_SEC;
-    const visible=points.filter(p => p.t >= begin);
-    let limit=1.5;
-    for (const p of visible) limit=Math.max(limit,Math.ceil(Math.max(Math.abs(p.x),Math.abs(p.y),Math.abs(p.z)) * 2)/2);
-    const py = v => top + (limit-v)/(2*limit)*plotH;
-    const px = t => left + (t-begin)/WINDOW_SEC*plotW;
-    ctx.font='11px -apple-system, sans-serif';
-    ctx.textAlign='right'; ctx.textBaseline='middle';
-    for (let i=0;i<=4;i++) {
-      const y=top+plotH*i/4;
-      ctx.strokeStyle=i===2?'#53647c':'#2d3950';
-      ctx.lineWidth=i===2?1.3:1;
-      ctx.beginPath();ctx.moveTo(left,y);ctx.lineTo(W-right,y);ctx.stroke();
-      ctx.fillStyle='#95a5bb';
-      ctx.fillText((limit*(1-i/2)).toFixed(1),left-7,y);
-    }
-    ctx.textAlign='center';ctx.textBaseline='top';
-    for (let i=0;i<=4;i++) {
-      const x=left+plotW*i/4;
-      ctx.fillStyle='#95a5bb';ctx.fillText((-(WINDOW_SEC*(1-i/4))).toFixed(0)+'s',x,H-bottom+8);
-      ctx.strokeStyle='#253247';ctx.lineWidth=1;
-      ctx.beginPath();ctx.moveTo(x,top);ctx.lineTo(x,H-bottom);ctx.stroke();
-    }
-    for (const axis of ['x','y','z']) {
-      ctx.strokeStyle=colors[axis];ctx.lineWidth=2;ctx.lineJoin='round';ctx.lineCap='round';
-      ctx.beginPath();
-      visible.forEach((p,i)=> { const x=px(p.t),y=py(p[axis]); if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y); });
-      if (visible.length===1) { const p=visible[0];ctx.arc(px(p.t),py(p[axis]),2.5,0,Math.PI*2);ctx.fillStyle=colors[axis];ctx.fill(); }
-      else if (visible.length>1) ctx.stroke();
-    }
+  return {mapX,mapY,begin};
+}
+function drawLine(ctx,points,axis,color,xy){
+  const visible=points.filter(p=>p.t>=xy.begin);
+  if(!visible.length)return;
+  ctx.strokeStyle=color;ctx.lineWidth=2;ctx.lineJoin='round';ctx.lineCap='round';ctx.beginPath();
+  visible.forEach((p,i)=>{const x=xy.mapX(p.t),y=xy.mapY(p[axis]);if(!i)ctx.moveTo(x,y);else ctx.lineTo(x,y);});
+  if(visible.length===1){ctx.arc(xy.mapX(visible[0].t),xy.mapY(visible[0][axis]),3,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();}
+  else ctx.stroke();
+}
+function drawAccel(){
+  const q=prepareCanvas(accelCanvas,ac);if(!q)return;
+  const now=performance.now()/1000,visible=accelPoints.filter(p=>p.t>=now-20);
+  let lim=1.5;for(const p of visible)lim=Math.max(lim,Math.ceil(Math.max(Math.abs(p.x),Math.abs(p.y),Math.abs(p.z))*2)/2);
+  const xy=drawFrame(ac,q,-lim,lim,20);
+  for(const axis of ['x','y','z'])drawLine(ac,visible,axis,colors[axis],xy);
+}
+function drawPressure(){
+  const q=prepareCanvas(pressureCanvas,pc);if(!q)return;
+  const now=performance.now()/1000,visible=pressurePoints.filter(p=>p.t>=now-90);
+  let lo=820,hi=830;
+  if(visible.length){lo=Math.min(...visible.map(p=>p.p));hi=Math.max(...visible.map(p=>p.p));const pad=Math.max((hi-lo)*.15,1);lo-=pad;hi+=pad;}
+  const xy=drawFrame(pc,q,lo,hi,90);
+  drawLine(pc,visible,'p','#77baff',xy);
+}
+let previousFrame=0;
+function frame(ts){
+  if(ts-previousFrame>=75){drawAccel();drawPressure();previousFrame=ts;
+    const t=performance.now()/1000;
+    if(lastPressureTime&&t-lastPressureTime>4)$('pressureStatus').textContent='Pressure data stale ('+Math.floor(t-lastPressureTime)+'s)';
+    if(lastAccelTime&&t-lastAccelTime>4)$('accelStatus').textContent='Acceleration data stale ('+Math.floor(t-lastAccelTime)+'s)';
   }
-  let previousFrame=0;
-  function loop(ts) { if(ts-previousFrame>=60){draw();previousFrame=ts;} requestAnimationFrame(loop); }
-  requestAnimationFrame(loop);
-
-  connectBtn.addEventListener('click',connect);
-  disconnectBtn.addEventListener('click',disconnect);
-  recordBtn.addEventListener('click',toggleRecording);
-  exportBtn.addEventListener('click',exportCsv);
-  $('clear').addEventListener('click',clearGraph);
-  if (!navigator.bluetooth) status('This page requires a Web Bluetooth browser such as Bluefy. Safari does not support it.', 'error');
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+$('connect').addEventListener('click',connect);
+$('disconnect').addEventListener('click',disconnect);
+$('zero').addEventListener('click',zeroAmbient);
+$('record').addEventListener('click',toggleRecording);
+$('export').addEventListener('click',exportCsv);
+$('clear').addEventListener('click',clearGraphs);
+if(!navigator.bluetooth)status('Requires Bluefy with Web Bluetooth. Safari does not support it.','error');
 </script>
 </body>
 </html>
